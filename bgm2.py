@@ -6,10 +6,10 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # ================= 配置 =================
 
-USER_ID = 888347
+USER_ID = 
 API_BASE = "https://api.bgm.tv"
 OUTPUT_CSV = "bangumi_result.csv"
-ACCESS_TOKEN = "kBgUZMutEmPoyYqgOX0zmxSN4qh9Jg3NpgCffc9V"
+ACCESS_TOKEN = ""
 
 HEADERS = {
     "User-Agent": "12819/bgm-collection-fetcher (private-script)",
@@ -17,8 +17,8 @@ HEADERS = {
     "Authorization": f"Bearer {ACCESS_TOKEN}"
 }
 
-MAX_WORKERS = 9   # 并发数，6~10 比较安全
-REQUEST_DELAY = 0.1  # 防止过快（秒）
+MAX_WORKERS = 9   # 并发数
+REQUEST_DELAY = 0.1  # 防止过快
 
 # ========================================
 
@@ -140,3 +140,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
