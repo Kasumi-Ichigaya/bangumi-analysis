@@ -45,7 +45,7 @@ def get_collections(user_id):
 
     while True:
         url = f"{API_BASE}/v0/users/{user_id}/collections"
-        params = {"limit": limit, "offset": offset}
+        params = {"limit": limit, "offset": offset，'type':2}
 
         r = session.get(url, params=params, timeout=10)
         if r.status_code == 400:
@@ -160,3 +160,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
