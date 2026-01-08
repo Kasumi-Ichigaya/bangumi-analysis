@@ -5,6 +5,9 @@ on:
     - cron: "0 19 * * 1"
   workflow_dispatch:
 
+permissions:
+  contents: write   # ← ⭐⭐⭐ 关键就在这行
+
 jobs:
   update:
     runs-on: ubuntu-latest
