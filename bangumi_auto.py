@@ -2,6 +2,7 @@ import requests
 import csv
 import math
 import time
+import os
 import pandas as pd
 import plotly.express as px
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -11,7 +12,7 @@ API_BASE = "https://api.bgm.tv"
 OUTPUT_CSV = "bangumi_888347.csv"
 OUTPUT_HTML_ANIME = "index.html"
 OUTPUT_HTML_GAME = "index_game.html"
-ACCESS_TOKEN = "kBgUZMutEmPoyYqgOX0zmxSN4qh9Jg3NpgCffc9V"
+ACCESS_TOKEN = os.getenv("BGM_TOKEN")
 
 HEADERS = {
     "User-Agent": "12819/bgm-collection-fetcher (private-script)",
@@ -162,3 +163,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
