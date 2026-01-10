@@ -103,6 +103,7 @@ button:active {
     }
 }
 
-.plotly-graph-div { cursor: crosshair; }
-.plot { display: none; }
-.plot.active { display: block; }
+.plotly .scatterlayer .point { cursor: pointer; }
+.plotly-graph-div { cursor: crosshair; }  
+
+
