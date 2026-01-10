@@ -85,7 +85,8 @@ def fetch_subject(subject_id, subject_type):
             "name": name,
             "mean": round(mean, 3),
             "std": round(std, 3),
-            "type": subject_type
+            "type": subject_type,
+            "url":f"https://bangumi.tv/subject/{subject_id}"
         }
 
     except Exception:
@@ -113,20 +114,24 @@ def make_toggle_html(df_anime, df_game, output):
         x="std",
         y="mean",
         hover_name="name",
+        custom_data=["url"],
         labels={"std": "标准差（分歧程度）", "mean": "平均分（整体评价）"},
         title="Bangumi 动画评分分布"
     )
     fig_anime.update_traces(marker=dict(size=9, opacity=0.75))
-
+    fig_anime.update_layout(dragmode=False)
     fig_game = px.scatter(
         df_game,
         x="std",
         y="mean",
         hover_name="name",
+        custom_data=["url"],
         labels={"std": "标准差（分歧程度）", "mean": "平均分（整体评价）"},
         title="Bangumi 游戏评分分布"
     )
     fig_game.update_traces(marker=dict(size=9, opacity=0.75))
+    fig_game.update_layout(dragmode=False)
+
     
     COMMON_LAYOUT = dict(
     width=1150,
@@ -150,19 +155,27 @@ def make_toggle_html(df_anime, df_game, output):
     fig_anime.update_layout(**COMMON_LAYOUT)
     fig_game.update_layout(**COMMON_LAYOUT)
 
-
+    config = {
+    "scrollZoom": False,      # 禁用滚轮/触摸缩放
+    "doubleClick": False,     # 禁用双击缩放
+    "displayModeBar": True,  # 显示右上角工具栏
+    "responsive": True
+    }
+    
     anime_html = pio.to_html(
     fig_anime,
     full_html=False,
     include_plotlyjs="cdn",
-    div_id="anime"
+    div_id="anime",
+    config=config
 )
 
     game_html = pio.to_html(
     fig_game,
     full_html=False,
     include_plotlyjs=False,
-    div_id="game"
+    div_id="game",
+    config=config
 )
 
 
@@ -241,7 +254,7 @@ def main():
     # ===== 写 CSV =====
     with open(OUTPUT_CSV, "w", newline="", encoding="utf-8-sig") as f:
         writer = csv.DictWriter(
-            f, fieldnames=["name", "mean", "std", "type"]
+            f, fieldnames=["name", "mean", "std", "type","url"]
         )
         writer.writeheader()
         writer.writerows(results)
@@ -260,4 +273,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
