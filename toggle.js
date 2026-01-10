@@ -1,109 +1,56 @@
-/* ================= 基础 ================= */
-body {
-    margin: 0;
-    font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
-    background: #f6f7fb;
-    color: #333;
-}
+let current = "anime"; // 初始显示动画图
 
-/* 整页容器 */
-.page {
-    position: relative;
-}
+const toggleBtn = document.getElementById("toggleBtn");
+const animePlot = document.getElementById("plot-anime");
+const gamePlot = document.getElementById("plot-game");
 
-/* ================= 图表区域 ================= */
-.chart-area {
-    overflow-x: auto;
-    padding: 32px;
-}
+toggleBtn.addEventListener("click", () => {
+    if (current === "anime") {
+        // 切换到游戏
+        animePlot.classList.remove("active");
+        gamePlot.classList.add("active");
+        toggleBtn.innerText = "切换到动画";
+        current = "game";
 
-/* 图表卡片 */
-.chart {
-    width: 1200px;
-    height: 650px;
-    position: relative;
+        // 强制 Plotly 重新计算尺寸
+        setTimeout(() => {
+            const gd = gamePlot.querySelector(".plotly-graph-div");
+            if (gd) Plotly.Plots.resize(gd);
+        }, 50);
 
-    background: #ffffff;
-    border-radius: 14px;
-    box-shadow:
-        0 10px 24px rgba(0, 0, 0, 0.08),
-        0 2px 6px rgba(0, 0, 0, 0.04);
-}
+    } else {
+        // 切换到动画
+        gamePlot.classList.remove("active");
+        animePlot.classList.add("active");
+        toggleBtn.innerText = "切换到游戏";
+        current = "anime";
 
-/* ================= Plot 切换 ================= */
-.plot {
-    position: absolute;
-    inset: 0;
-
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.5s ease;
-    z-index: 0;
-}
-
-.plot.active {
-    opacity: 1;
-    pointer-events: auto;
-    z-index: 1;
-}
-
-/* ================= 右侧按钮 ================= */
-.side {
-    position: fixed;
-    right: 28px;
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 1000;
-}
-
-/* 按钮样式 */
-button {
-    padding: 12px 18px;
-    font-size: 14px;
-    font-weight: 500;
-
-    border: none;
-    border-radius: 999px;
-    background: linear-gradient(135deg, #4f7cff, #6a8cff);
-    color: #fff;
-
-    cursor: pointer;
-    box-shadow:
-        0 8px 18px rgba(79, 124, 255, 0.35),
-        0 2px 6px rgba(0, 0, 0, 0.15);
-
-    transition:
-        transform 0.15s ease,
-        box-shadow 0.15s ease,
-        background 0.15s ease;
-}
-
-/* Hover */
-button:hover {
-    transform: translateY(-2px);
-    box-shadow:
-        0 12px 26px rgba(79, 124, 255, 0.45),
-        0 4px 10px rgba(0, 0, 0, 0.18);
-}
-
-/* 点击 */
-button:active {
-    transform: translateY(0);
-    box-shadow:
-        0 6px 14px rgba(79, 124, 255, 0.3),
-        0 2px 6px rgba(0, 0, 0, 0.2);
-}
-
-/* ================= 小屏适配 ================= */
-@media (max-width: 768px) {
-    .chart {
-        width: 1000px;
+        setTimeout(() => {
+            const gd = animePlot.querySelector(".plotly-graph-div");
+            if (gd) Plotly.Plots.resize(gd);
+        }, 50);
     }
+});
 
-    .side {
-        right: 16px;
-    }
+function bindClick(plotContainerId) {
+    const container = document.getElementById(plotContainerId);
+    if (!container) return;
+
+    const graphDiv = container.querySelector(".plotly-graph-div");
+    if (!graphDiv) return;
+
+    graphDiv.on("plotly_click", function (data) {
+        const url = data.points[0].customdata[0];
+        if (url) {
+            window.open(url, "_blank");
+        }
+    });
+
+    // 👇 UX：鼠标提示这是可点的
+    graphDiv.style.cursor = "pointer";
 }
 
-.plotly .scatterlayer .point { cursor: pointer; }
-.plotly-graph-div { cursor: crosshair; }  /* 仅空白区域十字 */
+window.addEventListener("load", () => {
+    bindClick("plot-anime");
+    bindClick("plot-game");
+});
