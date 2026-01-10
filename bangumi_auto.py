@@ -11,8 +11,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 USER_ID = 888347
 API_BASE = "https://api.bgm.tv"
 OUTPUT_CSV = "bangumi_888347.csv"
-OUTPUT_HTML_ANIME = "index.html"
-OUTPUT_HTML_GAME = "index_game.html"
+OUTPUT_HTML = "index.html"
 ACCESS_TOKEN = os.getenv("BGM_TOKEN")
 
 HEADERS = {
@@ -261,3 +260,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
