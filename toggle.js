@@ -30,3 +30,27 @@ function toggleChart() {
         }, 50);
     }
 }
+function bindClick(plotContainerId) {
+    const container = document.getElementById(plotContainerId);
+    if (!container) return;
+
+    const graphDiv = container.querySelector(".plotly-graph-div");
+    if (!graphDiv) return;
+
+    graphDiv.on("plotly_click", function (data) {
+        const url = data.points[0].customdata[0];
+        if (url) {
+            window.open(url, "_blank");
+        }
+    });
+
+    // 👇 UX：鼠标提示这是可点的
+    graphDiv.style.cursor = "pointer";
+}
+
+window.addEventListener("load", () => {
+    bindClick("plot-anime");
+    bindClick("plot-game");
+});
+
+
