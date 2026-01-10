@@ -1,0 +1,51 @@
+body {
+    margin: 0;
+    font-family: Microsoft YaHei, sans-serif;
+}
+
+/* 整个页面 */
+.page {
+    position: relative;
+}
+
+/* 图表区域：可横向滚动 */
+.chart-area {
+    overflow-x: auto;
+    padding: 24px;
+}
+
+/* 图表本体 */
+.chart {
+    width: 1200px;
+    height: 650px;
+    position: relative;
+}
+
+/* Plot 切换 */
+.plot {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
+}
+
+.plot.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* ✅ 按钮：脱离布局，固定在右侧 */
+.side {
+    position: fixed;
+    right: 24px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1000;
+}
+
+button {
+    padding: 10px 16px;
+    font-size: 14px;
+    cursor: pointer;
+}
