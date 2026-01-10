@@ -52,5 +52,3 @@ window.addEventListener("load", () => {
     bindClick("plot-anime");
     bindClick("plot-game");
 });
-
-
