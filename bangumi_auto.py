@@ -92,132 +92,86 @@ def fetch_subject(subject_id, subject_type):
     except Exception:
         return None
 
-
 def make_toggle_html(df_anime, df_game, output):
-    # ===== 统一坐标范围（动画 + 游戏一起算）=====
     df_all = pd.concat([df_anime, df_game], ignore_index=True)
-
-    x_min = df_all["std"].min()
-    x_max = df_all["std"].max()
-    y_min = df_all["mean"].min()
-    y_max = df_all["mean"].max()
-
-    # 留 5% 边距，防止点贴边
-    pad_x = (x_max - x_min) * 0.05
-    pad_y = (y_max - y_min) * 0.05
-
-    X_RANGE = [x_min - pad_x, x_max + pad_x]
-    Y_RANGE = [y_min - pad_y, y_max + pad_y]
-
-    fig_anime = px.scatter(
-        df_anime,
-        x="std",
-        y="mean",
-        hover_name="name",
-        custom_data=["url"],
-        labels={"std": "标准差（分歧程度）", "mean": "平均分（整体评价）"},
-        title="Bangumi 动画评分分布"
-    )
-    fig_anime.update_traces(marker=dict(size=9, opacity=0.75))
-    fig_anime.update_layout(dragmode=False)
-    fig_game = px.scatter(
-        df_game,
-        x="std",
-        y="mean",
-        hover_name="name",
-        custom_data=["url"],
-        labels={"std": "标准差（分歧程度）", "mean": "平均分（整体评价）"},
-        title="Bangumi 游戏评分分布"
-    )
-    fig_game.update_traces(marker=dict(size=9, opacity=0.75))
-    fig_game.update_layout(dragmode=False)
-
+    x_min, x_max = df_all["std"].min(), df_all["std"].max()
+    y_min, y_max = df_all["mean"].min(), df_all["mean"].max()
+    pad_x, pad_y = (x_max - x_min) * 0.05, (y_max - y_min) * 0.05
+    X_RANGE, Y_RANGE = [x_min - pad_x, x_max + pad_x], [y_min - pad_y, y_max + pad_y]
     
-    COMMON_LAYOUT = dict(
-    width=1150,
-    height=650,
-    margin=dict(l=60, r=40, t=80, b=60),
-    font=dict(family="Microsoft YaHei"),
+    def create_fig(df, title):
+        # 1. 在 px.scatter 中添加 labels 参数，让悬浮框也显示中文
+        fig = px.scatter(
+            df, x="std", y="mean", 
+            hover_name="name", 
+            render_mode='svg',
+            labels={"std": "标准差 (分歧程度)", "mean": "平均分 (整体评价)"}
+        )
+        
+        count = len(df)
+        fig.update_traces(
+            marker=dict(
+                size=[9] * count,
+                color=["#4f7cff"] * count,
+                opacity=0.7,
+                line=dict(width=0)
+            ),
+            customdata=df["url"],
+            hovertemplate="<b>%{hovertext}</b><br>标准差: %{x}<br>平均分: %{y}<extra></extra>"
+        )
 
-    xaxis=dict(
-        range=X_RANGE,
-        showgrid=True,
-        zeroline=False
-    ),
-    yaxis=dict(
-        range=Y_RANGE,
-        showgrid=True,
-        zeroline=False
-    ),
-)
+        fig.update_layout(
+            title=dict(text=title, x=0.5, xanchor='center'), # 标题居中
+            width=1150, height=650,
+            hovermode='closest',
+            dragmode=False,
+            # 2. 显式设置坐标轴的中文名称
+            xaxis=dict(
+                title="标准差 (分歧程度)", 
+                range=X_RANGE, 
+                showgrid=True
+            ),
+            yaxis=dict(
+                title="平均分 (整体评价)", 
+                range=Y_RANGE, 
+                showgrid=True
+            ),
+            # 3. 字体与边距优化
+            font=dict(family="Microsoft YaHei, SimHei, sans-serif"),
+            margin=dict(l=80, r=40, t=80, b=80) 
+        )
+        return fig
 
-
-    fig_anime.update_layout(**COMMON_LAYOUT)
-    fig_game.update_layout(**COMMON_LAYOUT)
-
+    # 配置保持不变
     config = {
-    "scrollZoom": False,      # 禁用滚轮/触摸缩放
-    "doubleClick": False,     # 禁用双击缩放
-    "displayModeBar": True,  # 显示右上角工具栏
-    "responsive": True
+        "responsive": True, 
+        "displayModeBar": True, 
+        "modeBarButtonsToRemove": ["lasso2d", "select2d"],
+        "displaylogo": False, 
     }
     
-    anime_html = pio.to_html(
-    fig_anime,
-    full_html=False,
-    include_plotlyjs="cdn",
-    div_id="anime",
-    config=config
-)
-
-    game_html = pio.to_html(
-    fig_game,
-    full_html=False,
-    include_plotlyjs=False,
-    div_id="game",
-    config=config
-)
-
+    anime_html = pio.to_html(create_fig(df_anime, "Bangumi 动画评分分布"), full_html=False, include_plotlyjs="cdn", div_id="canvas-anime", config=config)
+    game_html = pio.to_html(create_fig(df_game, "Bangumi 游戏评分分布"), full_html=False, include_plotlyjs=False, div_id="canvas-game", config=config)
 
     html = f"""
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html>
 <head>
     <meta charset="UTF-8">
-    <title>Bangumi 评分散点图</title>
     <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
-
-<h2 style="text-align:center;">Bangumi 评分分布</h2>
-
-<div class="page">
-    <div class="chart-area">
-        <div class="chart">
-            <div class="plot active" id="plot-anime">
-                {anime_html}
-            </div>
-            <div class="plot" id="plot-game">
-                {game_html}
-            </div>
-        </div>
+    <div class="page">
+        <div class="chart-area"><div class="chart">
+            <div class="plot active" id="container-anime">{anime_html}</div>
+            <div class="plot" id="container-game">{game_html}</div>
+        </div></div>
+        <div class="side"><button id="toggleBtn">切换到游戏</button></div>
     </div>
-
-    <div class="side">
-        <button id="toggleBtn" onclick="toggleChart()">切换到游戏</button>
-    </div>
-</div>
-<script src="toggle.js"></script>
+    <script src="toggle.js"></script>
 </body>
-</html>
-"""
-
-
-    with open(output, "w", encoding="utf-8") as f:
-        f.write(html)
-
-
+</html>"""
+    with open(output, "w", encoding="utf-8") as f: f.write(html)
 
 def main():
     print("📥 获取收藏列表...")
@@ -273,4 +227,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
