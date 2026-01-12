@@ -1,84 +1,123 @@
-window.addEventListener('load', () => {
-    const btn = document.getElementById("toggleBtn");
-    let current = "anime";
-    let selectedIdx = { "canvas-anime": null, "canvas-game": null };
+window.addEventListener("load", () => {
 
-    const COLORS = { DEFAULT: "#4f7cff", HOVER: "#ff4757", SELECT: "#4f7cff" };
-    const SIZES = { DEFAULT: 9, HOVER: 16, SELECT: 9 };
+    // ===== 1. 收集元素 =====
+    const plots = document.querySelectorAll(".plot");
+    const buttons = document.querySelectorAll(".side button");
 
-    // 1. 切换逻辑
-    btn.addEventListener("click", () => {
-        const anime = document.getElementById("container-anime");
-        const game = document.getElementById("container-game");
-        const isAnime = current === "anime";
-        anime.classList.toggle("active", !isAnime);
-        game.classList.toggle("active", isAnime);
-        btn.innerText = isAnime ? "切换到动画" : "切换到游戏";
-        current = isAnime ? "game" : "anime";
-        Plotly.Plots.resize(document.getElementById(isAnime ? "canvas-game" : "canvas-anime"));
+    const selectedIdx = {};
+
+    const COLORS = {
+        DEFAULT: "#4f7cff",
+        HOVER: "#ff4757",
+        SELECT: "#4f7cff"
+    };
+
+    const SIZES = {
+        DEFAULT: 9,
+        HOVER: 16,
+        SELECT: 9
+    };
+
+    // ===== 2. 按钮切换逻辑（N 分类）=====
+    buttons.forEach(btn => {
+        btn.addEventListener("click", () => {
+            const target = btn.dataset.target;   // ✅ 关键：来源在这
+
+            // 按钮选中态
+            buttons.forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+
+            // 图表切换动画
+            plots.forEach(p => {
+                if (p.classList.contains("active")) {
+                    p.classList.add("prev-out");
+                    p.classList.remove("active");
+                }
+            });
+
+            const next = document.getElementById("container-" + target);
+            if (!next) return;
+
+            next.classList.remove("prev-out");
+            next.classList.add("next-in", "active");
+
+            setTimeout(() => {
+                next.classList.remove("next-in");
+            }, 800);
+
+            // resize Plotly（防止显示异常）
+            const canvas = next.querySelector(".js-plotly-plot");
+            if (canvas) Plotly.Plots.resize(canvas);
+        });
     });
 
-    // 2. 绑定交互
+    // ===== 3. Plotly 交互绑定 =====
     function bind(gdId, containerId) {
         const gd = document.getElementById(gdId);
         const container = document.getElementById(containerId);
-        if (!gd || !gd.on) { setTimeout(() => bind(gdId, containerId), 100); return; }
+
+        if (!gd || !gd.on) {
+            setTimeout(() => bind(gdId, containerId), 100);
+            return;
+        }
+
+        selectedIdx[gdId] = null;
 
         gd.on("plotly_hover", (data) => {
             container.classList.add("is-hovering");
-            const pn = data.points[0].pointNumber;
-            const tn = data.points[0].curveNumber;
+            const { pointNumber: pn, curveNumber: tn } = data.points[0];
 
-            // 直接操作内存数组
             gd.data[tn].marker.size[pn] = SIZES.HOVER;
             gd.data[tn].marker.color[pn] = COLORS.HOVER;
-            
+
             Plotly.restyle(gd, {
-                'marker.size': [gd.data[tn].marker.size],
-                'marker.color': [gd.data[tn].marker.color]
+                "marker.size": [gd.data[tn].marker.size],
+                "marker.color": [gd.data[tn].marker.color]
             }, [tn]);
         });
 
         gd.on("plotly_unhover", (data) => {
             container.classList.remove("is-hovering");
-            const pn = data.points[0].pointNumber;
-            const tn = data.points[0].curveNumber;
+            const { pointNumber: pn, curveNumber: tn } = data.points[0];
 
-            // 还原逻辑：如果是选中的，保持选中色，否则恢复默认
-            const isSel = (selectedIdx[gdId] === pn);
+            const isSel = selectedIdx[gdId] === pn;
             gd.data[tn].marker.size[pn] = isSel ? SIZES.SELECT : SIZES.DEFAULT;
             gd.data[tn].marker.color[pn] = isSel ? COLORS.SELECT : COLORS.DEFAULT;
 
             Plotly.restyle(gd, {
-                'marker.size': [gd.data[tn].marker.size],
-                'marker.color': [gd.data[tn].marker.color]
+                "marker.size": [gd.data[tn].marker.size],
+                "marker.color": [gd.data[tn].marker.color]
             }, [tn]);
         });
 
         gd.on("plotly_click", (data) => {
-            const pn = data.points[0].pointNumber;
-            const tn = data.points[0].curveNumber;
-            
-            // 还原之前的选中点
+            const { pointNumber: pn, curveNumber: tn, customdata } = data.points[0];
+
             if (selectedIdx[gdId] !== null) {
-                gd.data[tn].marker.size[selectedIdx[gdId]] = SIZES.DEFAULT;
-                gd.data[tn].marker.color[selectedIdx[gdId]] = COLORS.DEFAULT;
+                const prev = selectedIdx[gdId];
+                gd.data[tn].marker.size[prev] = SIZES.DEFAULT;
+                gd.data[tn].marker.color[prev] = COLORS.DEFAULT;
             }
 
-            // 设置新选中点
             selectedIdx[gdId] = pn;
             gd.data[tn].marker.size[pn] = SIZES.SELECT;
             gd.data[tn].marker.color[pn] = COLORS.SELECT;
 
             Plotly.restyle(gd, {
-                'marker.size': [gd.data[tn].marker.size],
-                'marker.color': [gd.data[tn].marker.color]
+                "marker.size": [gd.data[tn].marker.size],
+                "marker.color": [gd.data[tn].marker.color]
             }, [tn]);
 
-            if (data.points[0].customdata) window.open(data.points[0].customdata, "_blank");
+            if (customdata) window.open(customdata, "_blank");
         });
     }
 
-    bind("canvas-anime", "container-anime");
-    bind("canvas-game", "container-game");
+    // ===== 4. 自动绑定所有 Plotly =====
+    plots.forEach(plot => {
+        const canvas = plot.querySelector(".js-plotly-plot");
+        if (canvas) {
+            bind(canvas.id, plot.id);
+        }
+    });
+
 });
