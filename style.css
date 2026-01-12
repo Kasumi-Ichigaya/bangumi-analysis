@@ -101,3 +101,13 @@ button:active { transform: translateY(0); }
 /* 交互辅助 */
 .is-hovering .nsewdrag { cursor: pointer !important; }
 .hoverlayer { pointer-events: none !important; }
+.side {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.side button.active {
+    background: linear-gradient(135deg, #ff4757, #ff6b81);
+    box-shadow: 0 10px 22px rgba(255,71,87,0.4);
+    transform: scale(1.05);
+}
