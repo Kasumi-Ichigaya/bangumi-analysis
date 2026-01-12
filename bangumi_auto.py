@@ -19,8 +19,10 @@ HEADERS = {
     "Accept": "application/json",
     "Authorization": f"Bearer {ACCESS_TOKEN}"
 }
-
-
+TYPE_MAP = {1: "Book",2: "Anime",3: "Music",4: "Game",
+}
+CN_LABEL = {"Anime": "动画","Game": "游戏","Book": "书籍","Music": "音乐",
+}
 
 REQUEST_DELAY = 0.3
 MAX_WORKERS = 6   # ✅ 推荐 4~6，别再高
@@ -80,26 +82,46 @@ def fetch_subject(subject_id, subject_type):
         mean, std = calc_mean_std(counts)
         if mean is None:
             return None
+        votes = sum(counts.values())  # 总票数
 
         return {
             "name": name,
             "mean": round(mean, 3),
             "std": round(std, 3),
-            "type": subject_type,
+            "type": TYPE_MAP.get(subject_type, "Other"),
+            "votes": votes,
             "url":f"https://bangumi.tv/subject/{subject_id}"
         }
 
     except Exception:
         return None
 
-def make_toggle_html(df_anime, df_game, output):
-    df_all = pd.concat([df_anime, df_game], ignore_index=True)
-    x_min, x_max = df_all["std"].min(), df_all["std"].max()
+def make_toggle_html(df_map, output):
+
+    # ===== A 组：Anime + Game（std）=====
+    df_std = pd.concat(
+        [df_map["Anime"], df_map["Game"]],
+        ignore_index=True
+    )
+    x1_min, x1_max = df_std["std"].min(), df_std["std"].max()
+    pad1 = (x1_max - x1_min) * 0.05
+    X_RANGE_STD = [x1_min - pad1, x1_max + pad1]
+
+    # ===== B 组：Book + Music（x_alt）=====
+    df_alt = pd.concat(
+    [df_map["Book"], df_map["Music"]],
+    ignore_index=True)
+
+    x2_min, x2_max = df_alt["std"].min(), df_alt["std"].max()
+    pad2 = (x2_max - x2_min) * 0.05
+    X_RANGE_ALT = [x2_min - pad2, x2_max + pad2]
+
+    # ===== 所有图共用的纵轴（mean）=====
+    df_all = pd.concat(df_map.values(), ignore_index=True)
     y_min, y_max = df_all["mean"].min(), df_all["mean"].max()
-    pad_x, pad_y = (x_max - x_min) * 0.05, (y_max - y_min) * 0.05
-    X_RANGE, Y_RANGE = [x_min - pad_x, x_max + pad_x], [y_min - pad_y, y_max + pad_y]
-    
-    def create_fig(df, title):
+    pad_y = (y_max - y_min) * 0.05
+    Y_RANGE = [y_min - pad_y, y_max + pad_y]
+    def create_fig(df, title, X_RANGE, Y_RANGE):
         # 1. 在 px.scatter 中添加 labels 参数，让悬浮框也显示中文
         fig = px.scatter(
             df, x="std", y="mean", 
@@ -109,6 +131,7 @@ def make_toggle_html(df_anime, df_game, output):
         )
         
         count = len(df)
+        customdata = list(zip(df["url"], df.get("votes", [0]*count)))
         fig.update_traces(
             marker=dict(
                 size=[9] * count,
@@ -116,10 +139,10 @@ def make_toggle_html(df_anime, df_game, output):
                 opacity=0.7,
                 line=dict(width=0)
             ),
-            customdata=df["url"],
-            hovertemplate="<b>%{hovertext}</b><br>标准差: %{x}<br>平均分: %{y}<extra></extra>"
+            customdata=customdata,
+            hovertemplate="<b>%{hovertext}</b><br>标准差: %{x}<br>平均分: %{y}<br>投票人数: %{customdata[1]}<extra></extra>"
         )
-
+        
         fig.update_layout(
             title=dict(text=title, x=0.5, xanchor='center'), # 标题居中
             width=1150, height=650,
@@ -150,28 +173,69 @@ def make_toggle_html(df_anime, df_game, output):
         "displaylogo": False, 
     }
     
-    anime_html = pio.to_html(create_fig(df_anime, "Bangumi 动画评分分布"), full_html=False, include_plotlyjs="cdn", div_id="canvas-anime", config=config)
-    game_html = pio.to_html(create_fig(df_game, "Bangumi 游戏评分分布"), full_html=False, include_plotlyjs=False, div_id="canvas-game", config=config)
+   
+    plot_divs = []
+    buttons = []
+    first = True
+    FIG_CONF = {
+    "Anime": {"x_range": X_RANGE_STD,},
+    "Game": {"x_range": X_RANGE_STD,},
+    "Book": {"x_range": X_RANGE_ALT,},
+    "Music": {"x_range": X_RANGE_ALT,},}
+    for key, df in df_map.items():
+        conf = FIG_CONF[key]
 
+        div_id = f"canvas-{key.lower()}"
+
+        html = pio.to_html(
+            create_fig(
+                df,
+                title = f"Bangumi {CN_LABEL[key]}评分分布",
+                X_RANGE=conf["x_range"],
+                Y_RANGE=Y_RANGE,
+            ),
+            full_html=False,
+            include_plotlyjs="cdn" if first else False,
+            div_id=div_id,
+            config=config,
+        )
+        plot_divs.append(
+            f'<div class="plot{" active" if first else ""}" '
+            f'id="container-{key.lower()}">{html}</div>'
+        )
+
+        buttons.append(
+            f'<button data-target="{key.lower()}">{CN_LABEL[key]}</button>'
+        )
+
+        first = False
+        
     html = f"""
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <link rel="stylesheet" href="style.css">
+    </head>
+    <body>
     <div class="page">
-        <div class="chart-area"><div class="chart">
-            <div class="plot active" id="container-anime">{anime_html}</div>
-            <div class="plot" id="container-game">{game_html}</div>
-        </div></div>
-        <div class="side"><button id="toggleBtn">切换到游戏</button></div>
+        <div class="chart-area">
+            <div class="chart">
+                {''.join(plot_divs)}
+            </div>
+        </div>
+
+        <div class="side">
+            {''.join(buttons)}
+        </div>
     </div>
+
     <script src="toggle.js"></script>
-</body>
-</html>"""
+    </body>
+    </html>
+    """
     with open(output, "w", encoding="utf-8") as f: f.write(html)
+
 
 def main():
     print("📥 获取收藏列表...")
@@ -185,7 +249,7 @@ def main():
         stype = subject.get("type")
         sid = item.get("subject_id")
 
-        if stype in (2, 4):
+        if stype in (1,2,3,4):#Book / Anime / Music / Game 已经都会被抓
             tasks.append((sid, stype))
 
     print(f"🚀 多线程抓取 {len(tasks)} 个 subject")
@@ -208,7 +272,7 @@ def main():
     # ===== 写 CSV =====
     with open(OUTPUT_CSV, "w", newline="", encoding="utf-8-sig") as f:
         writer = csv.DictWriter(
-            f, fieldnames=["name", "mean", "std", "type","url"]
+            f, fieldnames=["name", "mean", "std", "votes", "type", "url"]
         )
         writer.writeheader()
         writer.writerows(results)
@@ -216,11 +280,14 @@ def main():
     df = pd.read_csv(OUTPUT_CSV, encoding="utf-8-sig")
 
     make_toggle_html(
-    df[df["type"] == 2],
-    df[df["type"] == 4],
-    OUTPUT_HTML   # 只生成一个 index.html
-)
-
+        {
+            "Anime": df[df["type"] == "Anime"],
+            "Game": df[df["type"] == "Game"],
+            "Book": df[df["type"] == "Book"],
+            "Music": df[df["type"] == "Music"],
+        },
+        OUTPUT_HTML
+    )
 
     print("✅ 多线程完成，HTML 已生成")
 
