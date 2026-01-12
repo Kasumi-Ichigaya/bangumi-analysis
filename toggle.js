@@ -108,7 +108,7 @@ window.addEventListener("load", () => {
                 "marker.color": [gd.data[tn].marker.color]
             }, [tn]);
 
-            if (customdata) window.open(customdata, "_blank");
+            if (customdata && customdata[0]) window.open(customdata[0], "_blank");
         });
     }
 
@@ -121,3 +121,4 @@ window.addEventListener("load", () => {
     });
 
 });
+
