@@ -33,6 +33,14 @@ session = requests.Session()
 session.headers.update(HEADERS)
 
 
+def get_username(user_id):
+    url = f"{API_BASE}/v0/users/{user_id}"
+    r = session.get(url, timeout=10)
+    r.raise_for_status()
+    data = r.json()
+    return data.get("nickname") or data.get("username")
+USERNAME = get_username(USER_ID)
+
 def calc_mean_std(counts):
     total = sum(counts.values())
     if total == 0:
@@ -46,7 +54,7 @@ def calc_mean_std(counts):
 def get_collections(user_id):
     items = []
     offset = 0
-    limit = 30
+    limit = 50
 
     while True:
         url = f"{API_BASE}/v0/users/{user_id}/collections"
@@ -190,7 +198,7 @@ def make_toggle_html(df_map, output):
         html = pio.to_html(
             create_fig(
                 df,
-                title = f"Bangumi {CN_LABEL[key]}评分分布",
+                title = f"{USERNAME} 的Bangumi {CN_LABEL[key]}评分分布",
                 X_RANGE=conf["x_range"],
                 Y_RANGE=Y_RANGE,
             ),
@@ -209,34 +217,20 @@ def make_toggle_html(df_map, output):
         )
 
         first = False
-        
-    html = f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="UTF-8">
-        <link rel="stylesheet" href="style.css">
-    </head>
-    <body>
-    <div class="page">
-        <div class="chart-area">
-            <div class="chart">
-                {''.join(plot_divs)}
-            </div>
-        </div>
+    
+    def write_to_template(plot_divs, buttons, template_file="template.html", output_file="index.html"):
+        with open(template_file, "r", encoding="utf-8") as f:
+            template_html = f.read()
+        plots_html = ''.join(plot_divs)
+        buttons_html = ''.join(buttons)
+        html = template_html.replace("<!-- PLOT_DIVS_PLACEHOLDER -->", plots_html)
+        html = html.replace("<!-- BUTTONS_PLACEHOLDER -->", buttons_html)
+        with open(output_file, "w", encoding="utf-8") as f:
+            f.write(html)
 
-        <div class="side">
-            {''.join(buttons)}
-        </div>
-    </div>
+    write_to_template(plot_divs, buttons, template_file="template.html", output_file="index.html")
 
-    <script src="toggle.js"></script>
-    </body>
-    </html>
-    """
-    with open(output, "w", encoding="utf-8") as f: f.write(html)
-
-
+    
 def main():
     print("📥 获取收藏列表...")
     collections = get_collections(USER_ID)
