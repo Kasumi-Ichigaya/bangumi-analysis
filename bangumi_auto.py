@@ -1,11 +1,8 @@
+import math,time
 import requests
-import csv
-import math
-import time
-import os
 import pandas as pd
-import plotly.io as pio
 import plotly.express as px
+import plotly.io as pio
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 USER_ID = 888347
@@ -19,10 +16,13 @@ HEADERS = {
     "Accept": "application/json",
     "Authorization": f"Bearer {ACCESS_TOKEN}"
 }
-TYPE_MAP = {1: "Book",2: "Anime",3: "Music",4: "Game",
+TYPE_INFO = {
+    "Book":  {"key": "Book",  "cn": "书籍"},
+    "Anime": {"key": "Anime", "cn": "动画"},
+    "Music": {"key": "Music", "cn": "音乐"},
+    "Game":  {"key": "Game",  "cn": "游戏"},
 }
-CN_LABEL = {"Anime": "动画","Game": "游戏","Book": "书籍","Music": "音乐",
-}
+
 
 REQUEST_DELAY = 0.3
 MAX_WORKERS = 6   # ✅ 推荐 4~6，别再高
@@ -96,7 +96,7 @@ def fetch_subject(subject_id, subject_type):
             "name": name,
             "mean": round(mean, 3),
             "std": round(std, 3),
-            "type": TYPE_MAP.get(subject_type, "Other"),
+            "type": {1: "Book", 2: "Anime", 3: "Music", 4: "Game"}[subject_type], 
             "votes": votes,
             "url":f"https://bangumi.tv/subject/{subject_id}"
         }
@@ -104,7 +104,7 @@ def fetch_subject(subject_id, subject_type):
     except Exception:
         return None
 
-def make_toggle_html(df_map, output):
+def make_toggle_html(df_map):
 
     # ===== A 组：Anime + Game（std）=====
     df_std = pd.concat(
@@ -157,16 +157,8 @@ def make_toggle_html(df_map, output):
             hovermode='closest',
             dragmode=False,
             # 2. 显式设置坐标轴的中文名称
-            xaxis=dict(
-                title="标准差 (分歧程度)", 
-                range=X_RANGE, 
-                showgrid=True
-            ),
-            yaxis=dict(
-                title="平均分 (整体评价)", 
-                range=Y_RANGE, 
-                showgrid=True
-            ),
+            xaxis=dict(title="标准差 (分歧程度)", range=X_RANGE, showgrid=True),
+            yaxis=dict(title="平均分 (整体评价)", range=Y_RANGE, showgrid=True),
             # 3. 字体与边距优化
             font=dict(family="Microsoft YaHei, SimHei, sans-serif"),
             margin=dict(l=80, r=40, t=80, b=80) 
@@ -198,7 +190,7 @@ def make_toggle_html(df_map, output):
         html = pio.to_html(
             create_fig(
                 df,
-                title = f"{USERNAME} 的Bangumi {CN_LABEL[key]}评分分布",
+                title = f"{USERNAME} 的Bangumi {TYPE_INFO[key]['cn']}评分分布",
                 X_RANGE=conf["x_range"],
                 Y_RANGE=Y_RANGE,
             ),
@@ -213,7 +205,7 @@ def make_toggle_html(df_map, output):
         )
 
         buttons.append(
-            f'<button data-target="{key.lower()}">{CN_LABEL[key]}</button>'
+            f'<button data-target="{key.lower()}">{TYPE_INFO[key]["cn"]}</button>'
         )
 
         first = False
@@ -264,14 +256,8 @@ def main():
         return
 
     # ===== 写 CSV =====
-    with open(OUTPUT_CSV, "w", newline="", encoding="utf-8-sig") as f:
-        writer = csv.DictWriter(
-            f, fieldnames=["name", "mean", "std", "votes", "type", "url"]
-        )
-        writer.writeheader()
-        writer.writerows(results)
-
-    df = pd.read_csv(OUTPUT_CSV, encoding="utf-8-sig")
+    df = pd.DataFrame(results)
+    df.to_csv(OUTPUT_CSV, index=False, encoding="utf-8-sig")
 
     make_toggle_html(
         {
@@ -280,7 +266,6 @@ def main():
             "Book": df[df["type"] == "Book"],
             "Music": df[df["type"] == "Music"],
         },
-        OUTPUT_HTML
     )
 
     print("✅ 多线程完成，HTML 已生成")
