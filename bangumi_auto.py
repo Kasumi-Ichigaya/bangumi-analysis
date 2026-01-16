@@ -96,14 +96,6 @@ def make_toggle_html(df_map):
 
     X_STD,X_ALT=pad(df_std["std"]),pad(df_alt["std"])
     Y_RANGE=pad(df_all["mean"])
-    # --- 调试代码开始 ---
-    print(f"【调试】df_all 里的实际最大值: {df_all['mean'].max()}")
-    print(f"【调试】df_all 里的实际最小值: {df_all['mean'].min()}")
-    print(f"【调试】计算出的 Y_RANGE: {Y_RANGE}")
-
-    # 检查一下 df_map 里到底有哪些 key，防止有隐藏的数据集
-    print(f"【调试】df_map 包含的分类: {df_map.keys()}")
-    # --- 调试代码结束 ---
     def fig(df, title, xr):
         fig = px.scatter(df, x="std", y="mean", hover_name="name", render_mode="svg",
                         labels={"std":"标准差 (分歧程度)","mean":"平均分 (整体评价)"})
@@ -182,3 +174,4 @@ def main():
 
 if __name__=="__main__":
     main()
+
