@@ -36,7 +36,13 @@
 *   **静态图片**（可选）：运行 `bgm_see.py` 读取 CSV 生成静态图片。
 
 ---
+### 3.使用方法
 
+- 将 `template.html`、`style.css`、`toggle.js` 放在项目目录
+- 运行 `bangumi_auto.py` 抓取数据
+- 脚本生成 `index.html` 并插入图表和按钮
+- 打开 `index.html` 交互查看评分分布
+---
 ## 🎨 前端模板说明 (index.html)
 
 生成的 HTML 基于 `template.html` 模板，结合了 Plotly 图表和原生 JavaScript 交互。
