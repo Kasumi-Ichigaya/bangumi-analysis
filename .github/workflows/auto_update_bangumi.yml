@@ -36,4 +36,5 @@ jobs:
           git config --global user.email "github-actions@github.com"
           git add .
           git commit -m "🤖 Weekly update Bangumi data" || echo "No changes"
+          git pull --rebase origin HEAD
           git push
