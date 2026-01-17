@@ -29,11 +29,12 @@ jobs:
         run: |
           python bangumi_auto.py
 
-      - name: Commit & Push
+      - name: Commit & Force Push to updates-bangumi
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
           git add .
           git commit -m "🤖 Weekly update Bangumi data" || echo "No changes"
-          git pull --rebase origin HEAD
-          git push origin HEAD:updates-bangumi
+          git checkout -B updates-bangumi  # -B 会创建新分支或重置已有分支
+          git push origin updates-bangumi --force
+
