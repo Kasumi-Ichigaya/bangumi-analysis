@@ -50,5 +50,13 @@ jobs:
       
           # 强制推送到远程分支
           git push origin updates-bangumi --force
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: updates-bangumi      # workflow push 的分支
+          base: main                   # 合并到主分支
+          title: "🤖 Weekly Bangumi update"
+          body: "This PR updates Bangumi data automatically."
 
 
