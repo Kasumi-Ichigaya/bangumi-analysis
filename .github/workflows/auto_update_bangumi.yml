@@ -29,12 +29,26 @@ jobs:
         run: |
           python bangumi_auto.py
 
-      - name: Commit & Force Push to updates-bangumi
+      - name: Commit & Pull & Force Push to updates-bangumi
         run: |
+          # 配置 Git 用户
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
+      
+          # 添加并提交本地更改
           git add .
           git commit -m "🤖 Weekly update Bangumi data" || echo "No changes"
-          git checkout -B updates-bangumi  # -B 会创建新分支或重置已有分支
+      
+          # 拉取远程 updates-bangumi 分支，如果不存在则忽略错误
+          git fetch origin updates-bangumi || true
+      
+          # 切换到本地分支，如果远程有分支则拉取最新内容
+          git checkout -B updates-bangumi origin/updates-bangumi || git checkout -B updates-bangumi
+      
+          # 可选：使用 rebase 合并远程更改，保持历史干净
+          git pull --rebase origin updates-bangumi || echo "No remote changes to rebase"
+      
+          # 强制推送到远程分支
           git push origin updates-bangumi --force
+
 
