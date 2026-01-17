@@ -28,30 +28,13 @@ jobs:
           PYTHONUTF8: "1"
         run: |
           python bangumi_auto.py
-
-      - name: Commit & Push to new branch
-        id: push_branch  # ← 给 step 一个 id
+      - name: Commit & Push to main
         run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "github-actions@github.com"
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+      
           git add .
           git commit -m "🤖 Weekly update Bangumi data" || echo "No changes"
-          # 生成带时间戳的分支
-          BRANCH_NAME="updates-bangumi-$(date +'%Y%m%d-%H%M%S')"
-          git checkout -B $BRANCH_NAME
-          git push origin $BRANCH_NAME --force
       
-          # 输出给后续步骤使用
-          echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
-
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v5
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          branch: ${{ steps.push_branch.outputs.branch_name }}  # 使用动态分支
-          base: main
-          title: "🤖 Weekly Bangumi update"
-          body: "This PR updates Bangumi data automatically."
-          merge-method: squash  # 可选，自动合并 PR
-
-
+          git pull --rebase origin main
+          git push origin main
