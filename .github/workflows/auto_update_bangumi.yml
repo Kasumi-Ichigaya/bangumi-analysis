@@ -29,34 +29,29 @@ jobs:
         run: |
           python bangumi_auto.py
 
-      - name: Commit & Pull & Force Push to updates-bangumi
+      - name: Commit & Push to new branch
+        id: push_branch  # ← 给 step 一个 id
         run: |
-          # 配置 Git 用户
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
-      
-          # 添加并提交本地更改
           git add .
           git commit -m "🤖 Weekly update Bangumi data" || echo "No changes"
+          # 生成带时间戳的分支
+          BRANCH_NAME="updates-bangumi-$(date +'%Y%m%d-%H%M%S')"
+          git checkout -B $BRANCH_NAME
+          git push origin $BRANCH_NAME --force
       
-          # 拉取远程 updates-bangumi 分支，如果不存在则忽略错误
-          git fetch origin updates-bangumi || true
-      
-          # 切换到本地分支，如果远程有分支则拉取最新内容
-          git checkout -B updates-bangumi origin/updates-bangumi || git checkout -B updates-bangumi
-      
-          # 可选：使用 rebase 合并远程更改，保持历史干净
-          git pull --rebase origin updates-bangumi || echo "No remote changes to rebase"
-      
-          # 强制推送到远程分支
-          git push origin updates-bangumi --force
+          # 输出给后续步骤使用
+          echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          branch: updates-bangumi      # workflow push 的分支
-          base: main                   # 合并到主分支
+          branch: ${{ steps.push_branch.outputs.branch_name }}  # 使用动态分支
+          base: main
           title: "🤖 Weekly Bangumi update"
           body: "This PR updates Bangumi data automatically."
+          merge-method: squash  # 可选，自动合并 PR
 
 
