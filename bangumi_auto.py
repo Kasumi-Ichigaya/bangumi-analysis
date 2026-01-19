@@ -155,7 +155,15 @@ def make_toggle_html(df_map):
             div_id=f"canvas-{k.lower()}",
             config=cfg,
         )
-        divs.append(f'<div class="plot{" active" if first else ""}" id="container-{k.lower()}">{html}</div>')
+        divs.append(f'''
+<div class="plot{" active" if first else ""}" id="container-{k.lower()}">
+    {html}
+    <div class="overlay">
+        <div class="hover-dot"></div>
+    </div>
+</div>
+''')
+
         btns.append(f'<button data-target="{k.lower()}">{TYPE_INFO[k]["cn"]}</button>')
         first = False  
 
@@ -194,4 +202,8 @@ def main():
 
 if __name__=="__main__":
     main()
+
+if __name__=="__main__":
+    main()
+
 
