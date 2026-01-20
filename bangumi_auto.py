@@ -143,35 +143,16 @@ def make_toggle_html(df_map):
 
     cfg = {"responsive":True,"displayModeBar":True,"modeBarButtonsToRemove":["lasso2d","select2d"],"displaylogo":False}
 
-    divs,btns,first=[],[],True
-    XR={"Anime":X_STD,"Game":X_STD,"Real":X_STD,"Book":X_ALT,"Music":X_ALT}
-    BUTTON_ORDER = ["Anime", "Game", "Book", "Music", "Real"]  # <-- 固定顺序
-    for k in BUTTON_ORDER:
-        df = df_map[k]
-        html = pio.to_html(
-            fig(df, f"{USERNAME} 的Bangumi {TYPE_INFO[k]['cn']}评分分布", XR[k]),
-            full_html=False,
-            include_plotlyjs="cdn" if first else False,
-            div_id=f"canvas-{k.lower()}",
-            config=cfg,
-        )
-        divs.append(f'''
-<div class="plot{" active" if first else ""}" id="container-{k.lower()}">
-    {html}
-    <div class="overlay">
-        <div class="hover-dot"></div>
-    </div>
-</div>
-''')
+    XR = {"Anime": X_STD, "Game": X_STD, "Real": X_STD, "Book": X_ALT, "Music": X_ALT}
+    BUTTON_ORDER = ["Anime", "Game", "Book", "Music", "Real"]
 
-        btns.append(f'<button data-target="{k.lower()}">{TYPE_INFO[k]["cn"]}</button>')
-        first = False  
-
-    t=open("template.html","r",encoding="utf-8").read()
-    open(OUTPUT_HTML,"w",encoding="utf-8").write(
-        t.replace("<!-- PLOT_DIVS_PLACEHOLDER -->","".join(divs))
-         .replace("<!-- BUTTONS_PLACEHOLDER -->","".join(btns))
-    )
+    t = open("template.html", "r", encoding="utf-8").read()
+    for i, k in enumerate(BUTTON_ORDER):
+        html = pio.to_html(fig(df_map[k], f"{USERNAME} 的Bangumi {TYPE_INFO[k]['cn']}评分分布", XR[k]),
+                        full_html=False, include_plotlyjs="cdn" if i==0 else False,
+                        div_id=f"canvas-{k.lower()}", config=cfg)
+        t = t.replace('<!-- Plotly图 -->', html, 1)#注入到模板里对应的div
+    open(OUTPUT_HTML, "w", encoding="utf-8").write(t)
 
 # ================= MAIN =================
 
@@ -202,8 +183,3 @@ def main():
 
 if __name__=="__main__":
     main()
-
-if __name__=="__main__":
-    main()
-
-
