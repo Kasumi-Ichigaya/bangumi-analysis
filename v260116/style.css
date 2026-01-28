@@ -1,0 +1,40 @@
+/* ================== 全局样式 ================== */
+body{margin:0;font-family:"Microsoft YaHei","PingFang SC",sans-serif;background:#f6f7fb;color:#333;}
+
+/* 页面容器 */
+.page{position:relative;}
+
+/* 图表区域 */
+.chart-area{padding:32px;display:flex;justify-content:center;}
+
+/* 图表卡片 */
+.chart{width:1200px;height:650px;position:relative;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 10px 24px rgba(0,0,0,0.08),0 2px 6px rgba(0,0,0,0.04);}
+.plotly-graph-div{width:100% !important;height:100% !important;}
+
+/* ================== Plot 切换动画 ================== */
+.plot{position:absolute;inset:0;opacity:0;pointer-events:none;filter:blur(10px);z-index:1;transition:opacity 0.7s cubic-bezier(0.4,0,0.2,1),transform 0.8s cubic-bezier(0.34,1.56,0.64,1),filter 0.7s ease;}
+.plot.next-in{transform:translateX(50px) scale(0.95);}
+.plot.prev-out{transform:translateX(-50px) scale(0.95);}
+.plot.active{opacity:1;pointer-events:auto;filter:blur(0);transform:translateX(0) scale(1);z-index:10;}
+
+.plot .js-plotly-plot{position:relative;z-index:1}
+.plot .overlay{position:absolute;inset:0;z-index:50;pointer-events:none;filter:none!important;opacity:1!important}
+.plot .hover-dot{position:absolute;width:14px;height:14px;border-radius:50%;background:rgba(255,71,87,.85);transform:translate(-50%,-50%);display:none}
+.plot .js-plotly-plot svg{cursor:default}
+.plot.is-hovering .js-plotly-plot svg{cursor:pointer}
+
+/* ================== 按钮交互 ================== */
+button{padding:12px 18px;font-size:14px;font-weight:500;border:none;border-radius:999px;background:linear-gradient(135deg,#4f7cff,#6a8cff);color:#fff;cursor:pointer;box-shadow:0 8px 18px rgba(79,124,255,0.35),0 2px 6px rgba(0,0,0,0.15);transition:transform 0.15s ease,box-shadow 0.15s ease,background 0.15s ease;}
+button:hover{transform:translateY(-2px);}
+button:active{transform:scale(0.92);transform:translateY(0);}
+
+/* 右侧按钮组 */
+.side{position:fixed;right:28px;top:50%;transform:translateY(-50%);z-index:1000;display:flex;flex-direction:column;gap:12px;}
+.side button.active{background:linear-gradient(135deg,#ff4757,#ff6b81);box-shadow:0 10px 22px rgba(255,71,87,0.4);transform:scale(1.05);}
+
+/* ================== 小屏适配 ================== */
+@media(max-width:768px){.chart{width:1000px;}.side{right:16px;}}
+
+/* ================== Plotly 交互辅助 ================== */
+.is-hovering .nsewdrag{cursor:pointer !important;}
+.hoverlayer{pointer-events:none !important;}
