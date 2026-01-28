@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" href="bangumi.png" type="image/png">
+    <title>Bangumi评分分布</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Plotly JS 由第一个图表加载 -->
+</head>
+<body>
+<div class="page">
+    <div class="chart-area">
+        <div class="chart">
+            <!-- 五个类型的图表容器 -->
+            <div class="plot active" id="container-anime">
+                <div id="canvas-anime"><!-- Plotly图 --></div>
+                <div class="overlay"><div class="hover-dot"></div></div>
+            </div>
+            <div class="plot" id="container-game">
+                <div id="canvas-game"><!-- Plotly图 --></div>
+                <div class="overlay"><div class="hover-dot"></div></div>
+            </div>
+            <div class="plot" id="container-book">
+                <div id="canvas-book"><!-- Plotly图 --></div>
+                <div class="overlay"><div class="hover-dot"></div></div>
+            </div>
+            <div class="plot" id="container-music">
+                <div id="canvas-music"><!-- Plotly图 --></div>
+                <div class="overlay"><div class="hover-dot"></div></div>
+            </div>
+            <div class="plot" id="container-real">
+                <div id="canvas-real"><!-- Plotly图 --></div>
+                <div class="overlay"><div class="hover-dot"></div></div>
+            </div>
+
+            <!-- PLOT_DIVS_PLACEHOLDER -->
+            <!-- 如果你仍希望 Python 动态生成div，也可以保留这个占位符 -->
+        </div>
+    </div>
+
+    <div class="side">
+        <button id="toggle-mean-line">平均线</button>
+        <!-- 五种类型按钮 -->
+        <button data-target="anime">动画</button>
+        <button data-target="game">游戏</button>
+        <button data-target="book">书籍</button>
+        <button data-target="music">音乐</button>
+        <button data-target="real">三次元</button>
+
+        <!-- BUTTONS_PLACEHOLDER -->
+        <!-- 如果希望 Python 动态生成按钮，可以保留占位符 -->
+    </div>
+</div>
+
+<script src="toggle.js"></script>
+</body>
+</html>
